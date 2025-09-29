@@ -11,7 +11,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - n8n-network
+      - seventrees_network
 
   postgres:
     image: postgres:17
@@ -31,8 +31,7 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - n8n-network
-      - shark
+      - seventrees_network
 
   n8n:
     build:
@@ -76,8 +75,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - n8n-network
-      - shark
+      - seventrees_network
     healthcheck:
       test: ['CMD', 'node', '-v']
       interval: 5s
@@ -122,8 +120,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - n8n-network
-      - shark
+      - seventrees_network
 
   n8n-worker:
     build:
@@ -166,8 +163,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - n8n-network
-      - shark
+      - seventrees_network
     healthcheck:
       test: ['CMD', 'node','-v']
       interval: 5s
@@ -183,7 +179,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - n8n-network
+      - seventrees_network
     environment:
       # These are defaults from monitor.Dockerfile, can be overridden here if needed
       - REDIS_HOST=${REDIS_HOST}
@@ -231,7 +227,7 @@ services:
       n8n-worker: # Ensure worker service is defined, though it might start with 0 replicas if autoscaled from 0
         condition: service_started # or service_healthy if you have a healthcheck that passes with 0 initial replicas
     networks:
-      - n8n-network
+      - seventrees_network
 
 volumes:
   postgres_data:
@@ -240,7 +236,5 @@ volumes:
   n8n_webhook:
 
 networks:
-  n8n-network:
-    driver: bridge
-  shark:
+  seventrees_network:
     external: true
