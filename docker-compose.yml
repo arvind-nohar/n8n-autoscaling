@@ -3,12 +3,9 @@ volumes:
   redis_data:
   n8n_main:
   n8n_webhook:
-  traefik_data:
 
 networks:
-  n8n-network:
-    driver: bridge
-  shark:
+  seventrees_network:
     external: true
 
 x-n8n: &service-n8n
@@ -18,8 +15,7 @@ x-n8n: &service-n8n
   user: root:root
   restart: unless-stopped
   networks:
-    - n8n-network
-    - shark
+    - seventrees_network
   environment:
     - N8N_DIAGNOSTICS_ENABLED=${N8N_DIAGNOSTICS_ENABLED}
     - N8N_USER_FOLDER=${N8N_USER_FOLDER}
@@ -53,34 +49,6 @@ x-n8n: &service-n8n
     - NODE_FUNCTION_ALLOW_EXTERNAL=ajv,ajv-formats,puppeteer
     - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
-services:
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    restart: unless-stopped
-    networks:
-      - n8n-network
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
-    environment:
-      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
-
-  traefik:
-    image: traefik:v2.10
-    restart: unless-stopped
-    networks:
-      - n8n-network
-    command:
-      - "--api=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.n8n_ui.address=:8082"
-      - "--entrypoints.n8n_webhooks.address=:8083"
-    ports:
-      - "8082:8082"
-      - "8083:8083"
-    volumes:
-      - traefik_data:/letsencrypt
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-
   redis:
     image: redis:7-alpine
     restart: unless-stopped
@@ -93,7 +61,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - n8n-network
+      - seventrees_network
 
   postgres:
     image: postgres:17
@@ -116,8 +84,7 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - n8n-network
-      - shark
+      - seventrees_network
 
   n8n:
     <<: *service-n8n
@@ -132,21 +99,13 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - n8n-network
-      - shark
+      - seventrees_network
     healthcheck:
       test: ["CMD", "node", "-v"]
       interval: 5s
       timeout: 5s
       retries: 10
       start_period: 60s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.n8n-ui.rule=Host(`${N8N_HOST}`)"
-      - "traefik.http.routers.n8n-ui.entrypoints=n8n_ui"
-      - "traefik.http.routers.n8n-webhooks.rule=Host(`${N8N_WEBHOOK}`)"
-      - "traefik.http.routers.n8n-webhooks.entrypoints=n8n_webhooks"
-      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
 
   n8n-webhook:
     <<: *service-n8n
@@ -161,7 +120,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - n8n-network
+      - seventrees_network
 
   n8n-worker:
     <<: *service-n8n
@@ -177,8 +136,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - n8n-network
-      - shark
+      - seventrees_network
     healthcheck:
       test: ["CMD", "node", "-v"]
       interval: 5s
@@ -194,7 +152,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - n8n-network
+      - seventrees_network
     environment:
       # These are defaults from monitor.Dockerfile, can be overridden here if needed
       - REDIS_HOST=${REDIS_HOST}
@@ -243,4 +201,4 @@ services:
       n8n-worker: # Ensure worker service is defined, though it might start with 0 replicas if autoscaled from 0
         condition: service_started # or service_healthy if you have a healthcheck that passes with 0 initial replicas
     networks:
-      - n8n-network
+      - seventrees_network
