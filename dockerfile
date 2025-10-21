@@ -31,13 +31,13 @@ RUN apt-get update && apt-get install -y chromium && \
     rm -rf /var/lib/apt/lists/*
 
 # Install n8n and Puppeteer
-RUN npm install -g n8n puppeteer
+RUN npm install -g n8n puppeteer puppeteer-extra puppeteer-extra-plugin-stealth
 # Add npm global bin to PATH to ensure n8n executable is found
 ENV PATH="/usr/local/lib/node_modules/n8n/bin:$PATH"
 
 # Set environment variables
 ENV N8N_LOG_LEVEL=info
-ENV NODE_FUNCTION_ALLOW_EXTERNAL=ajv,ajv-formats,puppeteer
+ENV NODE_FUNCTION_ALLOW_EXTERNAL=ajv,ajv-formats,puppeteer,puppeteer-extra,puppeteer-extra-plugin-stealth
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Expose the n8n port
